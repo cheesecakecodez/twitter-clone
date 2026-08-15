@@ -26,6 +26,10 @@ void main() {
     testWidgets('tapping Register Now navigates to RegisterPage', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: LoginPage()));
 
+      // The page is scrollable, so scroll the target into view before tapping.
+      await tester.ensureVisible(find.text('Register Now'));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Register Now'));
       await tester.pumpAndSettle();
 

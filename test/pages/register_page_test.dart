@@ -27,6 +27,11 @@ void main() {
     testWidgets('tapping Login Now navigates to LoginPage', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: RegisterPage()));
 
+      // RegisterPage has more fields than LoginPage, so it's more likely to
+      // need scrolling before this link is tappable.
+      await tester.ensureVisible(find.text('Login Now'));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Login Now'));
       await tester.pumpAndSettle();
 
