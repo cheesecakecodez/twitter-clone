@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twitter_clone/pages/login_page.dart';
 import 'package:twitter_clone/pages/register_page.dart';
+import '../test_helpers/firebase_mock_setup.dart';
 
-// NOTE: LoginPage now calls AuthService() -> FirebaseAuth.instance, which
-// isn't available in a plain widget test (no Firebase app initialized).
-// We deliberately do NOT tap the "Login" button and assert a Firebase
-// outcome here -- that's covered separately once AuthService is made
-// mockable/injectable. These tests cover the parts that are safely
-// testable without a live Firebase connection: rendering and the
-// onTap-based navigation to RegisterPage (which is plain callback logic,
-// not Firebase-driven).
+// NOTE: LoginPage's State constructs AuthService() immediately, which reads
+// FirebaseAuth.instance -- so even just building LoginPage() requires a
+// Firebase app to exist. setupFirebaseAppForTests() fakes just enough of
+// firebase_core for that to succeed. We deliberately do NOT tap "Login"
+// with credentials and assert a Firebase outcome here -- that would
+// attempt a real network call. These tests cover rendering and the
+// onTap-based navigation to RegisterPage (plain callback logic).
 void main() {
+  setUpAll(() async {
+    await setupFirebaseAppForTests();
+  });
+
   group('LoginPage', () {
     testWidgets('renders email and password fields', (tester) async {
       await tester.pumpWidget(MaterialApp(home: LoginPage(onTap: () {})));
@@ -23,7 +27,7 @@ void main() {
 
     testWidgets('tapping Register Now navigates to RegisterPage', (tester) async {
       await tester.pumpWidget(MaterialApp(home: LoginPage(onTap: () {})));
-      // The page is scrollable, so scroll the target into view before tapping.
+
       await tester.ensureVisible(find.text('Register Now'));
       await tester.pumpAndSettle();
 

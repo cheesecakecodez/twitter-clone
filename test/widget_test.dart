@@ -4,13 +4,18 @@ import 'package:provider/provider.dart';
 import 'package:twitter_clone/services/auth/login_or_register.dart';
 import 'package:twitter_clone/pages/login_page.dart';
 import 'package:twitter_clone/themes/theme_provider.dart';
+import 'test_helpers/firebase_mock_setup.dart';
 
 // NOTE: We test LoginOrRegister here instead of MyApp/AuthGate directly.
-// AuthGate calls FirebaseAuth.instance.authStateChanges(), which requires
-// a real initialized Firebase app -- something widget tests don't have.
-// LoginOrRegister is the part of the "logged out" flow that's actually
-// testable without Firebase, since it doesn't touch FirebaseAuth itself.
+// AuthGate calls FirebaseAuth.instance.authStateChanges(), a real stream
+// subscription that's a bigger ask to fake reliably than the one-shot
+// app-existence check LoginOrRegister's children need. LoginOrRegister ->
+// LoginPage still needs a Firebase app to exist (see firebase_mock_setup.dart).
 void main() {
+  setUpAll(() async {
+    await setupFirebaseAppForTests();
+  });
+
   testWidgets('unauthenticated flow starts on the LoginPage', (tester) async {
     await tester.pumpWidget(
       ChangeNotifierProvider(

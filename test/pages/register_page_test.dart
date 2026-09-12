@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twitter_clone/pages/login_page.dart';
 import 'package:twitter_clone/pages/register_page.dart';
+import '../test_helpers/firebase_mock_setup.dart';
 
-// NOTE: RegisterPage calls AuthService() -> FirebaseAuth.instance for actual
-// account creation, which isn't available in a plain widget test. We don't
-// tap "Register" with valid matching credentials here (that would hit real
-// Firebase and throw). The password-mismatch case below is genuinely safe
-// to test though: registerMethod() checks pwController.text == cpwController.text
-// BEFORE ever touching Firebase, so it's pure, offline, testable logic.
+// NOTE: RegisterPage's State constructs AuthService() immediately, which
+// reads FirebaseAuth.instance -- so even just building RegisterPage()
+// requires a Firebase app to exist. setupFirebaseAppForTests() fakes just
+// enough of firebase_core for that to succeed. We still never tap
+// "Register" with valid matching credentials here (that would attempt a
+// real Firebase Auth network call and fail/hang). The password-mismatch
+// case is genuinely safe: registerMethod() checks
+// pwController.text == cpwController.text BEFORE touching Firebase at all.
 void main() {
+  setUpAll(() async {
+    await setupFirebaseAppForTests();
+  });
+
   group('RegisterPage', () {
     testWidgets('renders all four input fields', (tester) async {
       await tester.pumpWidget(MaterialApp(home: RegisterPage(onTap: () {})));
@@ -36,8 +43,6 @@ void main() {
     testWidgets('tapping Login Now navigates to LoginPage', (tester) async {
       await tester.pumpWidget(MaterialApp(home: RegisterPage(onTap: () {})));
 
-      // RegisterPage has more fields than LoginPage, so it's more likely to
-      // need scrolling before this link is tappable.
       await tester.ensureVisible(find.text('Login Now'));
       await tester.pumpAndSettle();
 

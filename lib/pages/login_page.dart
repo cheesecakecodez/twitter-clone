@@ -49,6 +49,7 @@ void loginMethod() async{
     //catch any errors and display them
     print(e.toString());
   }
+ 
 }
   //UI
   @override
