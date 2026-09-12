@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-//import 'package:twitter_clone/pages/home_page.dart';
-import 'package:twitter_clone/pages/login_page.dart';
-//import 'package:twitter_clone/themes/dark_mode.dart';
+import 'package:twitter_clone/services/auth/auth_gate.dart';
 import 'package:twitter_clone/themes/theme_provider.dart';
-//import 'package:twitter_clone/themes/light_mode.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-void main() {
+//run app with ChangeNotifierProvider to provide ThemeProvider to the entire app
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      home: const AuthGate(),
       theme: Provider.of<ThemeProvider>(context).themeData,
     );
   }

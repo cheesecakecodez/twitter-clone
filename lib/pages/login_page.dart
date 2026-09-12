@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:twitter_clone/components/my_button.dart';
 import 'package:twitter_clone/components/my_textfield.dart';
-import 'package:twitter_clone/pages/home_page.dart';
-import 'package:twitter_clone/pages/register_page.dart';
-
-
+//import 'package:twitter_clone/pages/home_page.dart';
+import 'package:twitter_clone/services/auth/auth_service.dart';
+import 'package:twitter_clone/components/my_loading_circle.dart';
 /*
-
 LOGIN PAGE
-
 On this page an esixting user can log in with an email and a password
 -email
 -password
@@ -19,20 +16,47 @@ else
 they are directed to the registration page
 */
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Function()? onTap;
+  const LoginPage({super.key, required this.onTap});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  
+  //access auth service
+  final _auth = AuthService();
 
 //text controllers
   final TextEditingController emailController= TextEditingController();
   final TextEditingController pwController= TextEditingController();
 
+//login method
+void loginMethod() async{
+  //show loading circle
+  showLoadingCircle(context);
+  //attempt to login with email and password
+  try{
+    await _auth.loginEmailAndPassword(
+      emailController.text, 
+      pwController.text);
 
+      //login finished
+      if (mounted) hideLoadingCircle(context);
+  }
+  catch(e){
+    if (mounted) hideLoadingCircle(context);
+    //catch any errors and display them
+    if (mounted) {
+    showDialog(context: context,
+      builder: (context) => AlertDialog(
+        title: Text(e.toString()),
+      )
+    );
+  }
+  }
+ 
+}
   //UI
   @override
   Widget build(BuildContext context) {
@@ -91,14 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 25),
             
               //sign in button
-              MyButton(name:"Login", onTap: (){
-                  //pop the menu drawer
-                  Navigator.pop(context);
-                  //navigate to settings page
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> HomePage(),
-                  )
-                  );
-                },),
+              MyButton(name:"Login", onTap: loginMethod),
                 const SizedBox(height: 50),
               //not a member?register now
               Row(
@@ -108,14 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text("Not a member?", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                   SizedBox(width: 5),
                   GestureDetector(
-                    onTap:() {
-                      //pop the menu drawer
-                  Navigator.pop(context);
-                  //navigate to settings page
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> RegisterPage(),
-                  )
-                  );
-                    },
+                    onTap: widget.onTap,
                     child: Text("Register Now",
                     style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)
                     ),

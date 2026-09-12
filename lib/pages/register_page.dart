@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:twitter_clone/components/my_button.dart';
 import 'package:twitter_clone/components/my_textfield.dart';
-import 'package:twitter_clone/pages/home_page.dart';
-import 'package:twitter_clone/pages/login_page.dart';
-
+//import 'package:twitter_clone/pages/home_page.dart';
+import 'package:twitter_clone/services/auth/auth_service.dart';
+import 'package:twitter_clone/components/my_loading_circle.dart';
 /* Registration page 
 -email
 -confirm password
@@ -16,20 +16,74 @@ else
 if user already exists it redirects to login page
 */
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  final Function()? onTap;
+  const RegisterPage({super.key, required this.onTap});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  //access auth service
+  final _auth = AuthService();
+
+//text controllers
   final TextEditingController nameController= TextEditingController();
   final TextEditingController emailController= TextEditingController();
   final TextEditingController pwController= TextEditingController();
   final TextEditingController cpwController= TextEditingController();
 
-  @override
+//register button tapped
+void registerMethod() async{
+  //PASSWORD MATCHES -> CREATE USER
+  //show loading circle
+    showLoadingCircle(context);
+  if(pwController.text==cpwController.text){
+    
+    
+    //attempt to register user
+    try{
+      //trying to register user with email and password
+      await _auth.registerEmailAndPassword(
+        emailController.text, 
+        pwController.text,
+        );
 
+        //registration finished
+        if (mounted) hideLoadingCircle(context);
+    }
+
+    //catch errors
+    catch(e) {
+      //loading finished
+      if (mounted) hideLoadingCircle(context);
+      //let user know the error
+      if (mounted) {
+        showDialog(context: context,
+           builder: (context) => AlertDialog(
+            title: Text(e.toString()),
+
+           )
+          );
+        
+      }
+
+    }
+    }
+  
+  else{
+    //passwords don't match-> show error
+    showDialog(context: context,
+           builder: (context) =>const AlertDialog(
+            title: Text("Passwords don't match"),
+            
+           ));
+  }
+  //passwords don't match-> show error
+
+}
+  @override
+  
   //Build UI
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,12 +134,7 @@ class _RegisterPageState extends State<RegisterPage> {
               
                   SizedBox(height:50),
                 MyButton(name:"Register", onTap: (){
-                  //pop the menu drawer
-                  Navigator.pop(context);
-                  //navigate to settings page
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> HomePage(),
-                  )
-                  );
+                  registerMethod();
                 },),
                 const SizedBox(height: 50),
               //not a member?register now
@@ -96,14 +145,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Text("Already a member?", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                   SizedBox(width: 5),
                   GestureDetector(
-                    onTap:() {
-                      //pop the menu drawer
-                  Navigator.pop(context);
-                  //navigate to settings page
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> LoginPage(),
-                  )
-                  );
-                    },
+                    onTap: widget.onTap,
                     child: Text("Login Now",
                     style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)
                     ),

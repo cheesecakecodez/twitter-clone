@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:twitter_clone/components/my_drawer_tile.dart';
 import 'package:twitter_clone/pages/home_page.dart';
-import 'package:twitter_clone/pages/login_page.dart';
+//import 'package:twitter_clone/pages/login_page.dart';
 import 'package:twitter_clone/pages/settings_page.dart';
+//import 'package:twitter_clone/services/auth/login_or_register.dart';
+import 'package:twitter_clone/services/auth/auth_service.dart';
 
 /*
 drawer accessed from the left side of app bar : the MENU
@@ -15,7 +17,27 @@ logout
 
 */
 class MyDrawer extends StatelessWidget {
-  const MyDrawer({super.key});
+  MyDrawer({super.key});
+
+  //access auth service
+  final _auth = AuthService();
+  //logout method
+  void logoutMethod(BuildContext context) async{
+  //attempt to logout
+  try{
+    await _auth.logout();
+  }
+  catch(e){
+    //let user know the error
+    if (context.mounted) {
+      showDialog(context: context,
+        builder: (context) => AlertDialog(
+          title: Text(e.toString()),
+        )
+      );
+    }
+  }
+}
 
 //UI
   @override
@@ -77,13 +99,15 @@ class MyDrawer extends StatelessWidget {
                 );
               },
             ),
-            // logout list tile
+            const Spacer(),
+            //logout list tile
             MyDrawerTile(
               title: "L O G O U T",
               icon: Icons.logout,
-              onTap:(){ Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder:(context)=>LoginPage()));},
-            )
+              // change the Logout tile's onTap:
+              onTap: () => logoutMethod(context),
+            ),
+            
           ],),
         ),
       )
