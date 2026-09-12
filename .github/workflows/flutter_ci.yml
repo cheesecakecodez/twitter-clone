@@ -29,5 +29,15 @@ jobs:
       - name: Analyze code
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run tests (JSON report)
+        run: flutter test --machine > test-results.json
+        continue-on-error: true
+
+      - name: Upload test results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.json
+
+      - name: Run tests (human-readable, fails the build on failure)
         run: flutter test

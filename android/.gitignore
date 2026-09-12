@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+# JVM/Gradle crash dumps — should never be committed
+hs_err_pid*.log
+replay_pid*.log
+.kotlin/
