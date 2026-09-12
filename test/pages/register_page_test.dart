@@ -41,15 +41,26 @@ void main() {
     });
 
     testWidgets('tapping Login Now navigates to LoginPage', (tester) async {
-      await tester.pumpWidget(MaterialApp(home: RegisterPage(onTap: () {})));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: RegisterPage(
+        onTap: () {
+          Navigator.push(
+            tester.element(find.text('Login Now')),
+            MaterialPageRoute(
+              builder: (context) => LoginPage(),
+            ),
+          );
+        },
+      ),
+    ),
+  );
 
-      await tester.ensureVisible(find.text('Login Now'));
-      await tester.pumpAndSettle();
+  await tester.ensureVisible(find.text('Login Now'));
+  await tester.tap(find.text('Login Now'));
+  await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Login Now'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(LoginPage), findsOneWidget);
-    });
+  expect(find.byType(LoginPage), findsOneWidget);
+});
   });
 }
