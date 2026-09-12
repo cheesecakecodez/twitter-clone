@@ -47,7 +47,13 @@ void loginMethod() async{
   catch(e){
     if (mounted) hideLoadingCircle(context);
     //catch any errors and display them
-    print(e.toString());
+    if (mounted) {
+    showDialog(context: context,
+      builder: (context) => AlertDialog(
+        title: Text(e.toString()),
+      )
+    );
+  }
   }
  
 }

@@ -21,7 +21,7 @@ class AuthGate extends StatelessWidget {
       body: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder:(context, snapshot) {
-          print('AuthGate: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, user=${snapshot.data?.uid}');
+          //print('AuthGate: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, user=${snapshot.data?.uid}');
          //user is logged in
          if(snapshot.hasData){
           return const HomePage();

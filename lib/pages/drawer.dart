@@ -22,16 +22,22 @@ class MyDrawer extends StatelessWidget {
   //access auth service
   final _auth = AuthService();
   //logout method
-  void logoutMethod() async{
-    //attempt to logout
-    try{
-      await _auth.logout();
-    }
-    catch(e){
-      //catch any errors and display them
-      print(e.toString());
+  void logoutMethod(BuildContext context) async{
+  //attempt to logout
+  try{
+    await _auth.logout();
+  }
+  catch(e){
+    //let user know the error
+    if (context.mounted) {
+      showDialog(context: context,
+        builder: (context) => AlertDialog(
+          title: Text(e.toString()),
+        )
+      );
     }
   }
+}
 
 //UI
   @override
@@ -98,7 +104,8 @@ class MyDrawer extends StatelessWidget {
             MyDrawerTile(
               title: "L O G O U T",
               icon: Icons.logout,
-              onTap: logoutMethod,
+              // change the Logout tile's onTap:
+              onTap: () => logoutMethod(context),
             ),
             
           ],),
