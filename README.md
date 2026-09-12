@@ -115,6 +115,91 @@ satisfied, the merge button unlocked and `b` was merged into `main`.
 
 ---
 
+## Bugs Fixed & Lessons Learned
+
+A running log of real problems hit while building this — not staged for the
+README, actually encountered and debugged.
+
+### Environment setup
+- **`flutterfire configure` not found** → Pub's global executables install to
+  `%LOCALAPPDATA%\Pub\Cache\bin`, which isn't on Windows PATH by default.
+  Learned: any Dart/Flutter global CLI tool needs this folder on PATH, permanently
+  (System Environment Variables), not just per-session.
+- **Symlink error building plugins** → Flutter plugins need Windows Developer
+  Mode enabled (`start ms-settings:developers`) to create symlinks.
+- **Kotlin daemon crash: "different roots"** → Caused by the project living on
+  `D:\` while the Pub cache lives on `C:\`. Kotlin's incremental compiler tries
+  to compute a relative path between the two for its cache and can't, since
+  Windows has no relative path across drive letters. Fixed by disabling
+  incremental Kotlin compilation in `android/gradle.properties`.
+- **Gradle daemon OOM crash** → Confirmed via the JVM's own `hs_err_pid*.log`:
+  genuinely out of RAM with Android Studio + emulator + VS Code + Gradle all
+  running at once on a 15GB machine. Fixed by lowering `org.gradle.jvmargs`
+  and disabling parallel workers, plus just closing unused apps.
+
+### `const` in Dart
+Learned that `const` requires every argument to be a **compile-time constant**.
+A closure like `onTap: () {}` is created at runtime, not compile time — so any
+widget taking a closure as an argument can't be constructed with `const`, and
+neither can any parent wrapping it.
+
+### The real auth navigation bug
+Spent a long stretch debugging "why doesn't the app navigate to HomePage after
+login." The architecture (`AuthGate` + `StreamBuilder` on `authStateChanges()`)
+was actually correct. The real bug: the drawer's **Logout** button manually
+pushed `LoginOrRegister()` with `Navigator.push` — without ever calling
+`FirebaseAuth.signOut()`. That meant:
+1. The user was never actually logged out, so signing back in with the same
+   account produced no new `authStateChanges()` event (Firebase only fires on
+   real transitions).
+2. The manually-pushed login screen sat on top of `AuthGate` in the navigation
+   stack, so `AuthGate` couldn't react even if it wanted to.
+
+Fix: call `AuthService().logout()` and let `AuthGate` handle navigation on its
+own — never manually push over it. Lesson: when using a stream-driven auth
+gate pattern, *nothing else* in the app should manually navigate between the
+authenticated/unauthenticated states — only real Firebase auth-state changes
+should drive that.
+
+### Testing Firebase-dependent widgets
+`LoginPage`, `RegisterPage`, and `HomePage` (via `MyDrawer`) all construct
+`AuthService()` immediately in their `State`, which reads `FirebaseAuth.instance`
+— so just *building* these widgets in a test throws `[core/no-app]` if Firebase
+was never initialized. Two mocking attempts:
+1. First tried mocking the old-style `plugins.flutter.io/firebase_core` method
+   channel — didn't work, because this `firebase_core` version uses newer
+   Pigeon-based channels (`dev.flutter.pigeon...FirebaseCoreHostApi`).
+2. Fixed by overriding `FirebasePlatform.instance` directly with a fake
+   implementation — bypasses platform channels entirely, so it's resilient to
+   `firebase_core`'s internal channel implementation changing again later.
+
+Also learned: `flutter analyze`'s `depend_on_referenced_packages` lint fires
+when you import a package (like `firebase_core_platform_interface`) that's
+only a *transitive* dependency — fixed with
+`flutter pub add dev:firebase_core_platform_interface`.
+
+### Git hygiene
+- `flutter analyze`'s `avoid_print` lint failed CI on leftover `print()` calls
+  in `login_page.dart`, `drawer.dart`, and a debug print I'd added to
+  `auth_gate.dart` while diagnosing the auth bug. Replaced the real ones with
+  proper `AlertDialog` error handling; removed the debug one entirely.
+- Accidentally committed a **289 MB `build.zip`** (from zipping folders to
+  share for debugging) directly into git history — caused `git push` to
+  fail with an HTTP 408 timeout. Since a plain delete-and-commit doesn't
+  remove old blobs from history, had to rewrite history with
+  `git filter-repo` and force-push. Lesson: `*.zip` now lives in root
+  `.gitignore`, and JVM crash logs (`hs_err_pid*.log`, `replay_pid*.log`)
+  are excluded too, after they nearly got committed from an earlier crash.
+
+### Still open
+- `register_page.dart` still has a leftover bug from before `AuthService`
+  was wired in — its Register button bypasses real Firebase account creation
+  entirely. Tracked as the next fix.
+- Login's error handling is now consistent with Register's (`AlertDialog` on
+  failure) — improved from silently swallowing errors via `print()`.
+
+  ---
+  
 ## Branch Protection Rules (`main`)
 - ✅ Require a pull request before merging
 - ✅ Require 1 approval before merging
