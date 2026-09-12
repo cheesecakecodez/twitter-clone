@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:twitter_clone/pages/home_page.dart';
-
+import '../test_helpers/firebase_mock_setup.dart';
+// ...
 void main() {
+  setUpAll(() async {
+    await setupFirebaseAppForTests();
+  });
   group('HomePage', () {
     testWidgets('shows the app bar title and has a drawer', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: HomePage()));
