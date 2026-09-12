@@ -48,7 +48,7 @@ void main() {
           Navigator.push(
             tester.element(find.text('Login Now')),
             MaterialPageRoute(
-              builder: (context) => LoginPage(),
+              builder: (context) => LoginPage(onTap: () {}),
             ),
           );
         },
